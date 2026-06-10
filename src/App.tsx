@@ -1,5 +1,6 @@
-import { useState, ChangeEvent, FormEvent, useEffect } from 'react';
-import { Building2, Smartphone, BrainCircuit, Database, Upload, Clock, CheckCircle2, AlertCircle, Info, Calendar } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import type { ChangeEvent, FormEvent } from 'react';
+import { Building2, Smartphone, BrainCircuit, Database, Upload, CheckCircle2, AlertCircle, Info, Calendar } from 'lucide-react';
 
 // Webhook URL untuk Power Automate (sementara dikosongkan/dummy)
 const POST_WEBHOOK_URL = 'https://default9cc6d9f3fc434e1785825c8fbcab8b.ef.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4766d2917f074b28b517e312719da27e/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=dO9G4VxohZX1lNMCmOqo5L-44d4VHN55qjw6QRDE5gU';
@@ -21,10 +22,7 @@ type FormData = {
 
 // Tipe data untuk jadwal yang sudah ada di Excel
 type Schedule = {
-  Lab: string;
-  Tanggal: string;
-  Sesi: string;
-  Status: string;
+  [key: string]: any; // Mengizinkan properti dinamis seperti "Tanggal & Jam"
 };
 
 const initialFormData: FormData = {
@@ -51,7 +49,6 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [bookedSchedules, setBookedSchedules] = useState<Schedule[]>([]);
-  const [isLoadingSchedules, setIsLoadingSchedules] = useState(false);
 
   // Fungsi untuk mengambil data jadwal dari Power Automate
   const fetchSchedules = async () => {
@@ -75,8 +72,6 @@ function App() {
       }
     } catch (error) {
       console.error('Gagal mengambil jadwal:', error);
-    } finally {
-      setIsLoadingSchedules(false);
     }
   };
 
