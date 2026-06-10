@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
-import { Building2, Smartphone, BrainCircuit, Database, Upload, CheckCircle2, AlertCircle, Info, Calendar } from 'lucide-react';
+import { Building2, Smartphone, BrainCircuit, Database, Upload, CheckCircle2, AlertCircle, Info, Calendar, Moon, Sun } from 'lucide-react';
 
 // Webhook URL untuk Power Automate (sementara dikosongkan/dummy)
 const POST_WEBHOOK_URL = 'https://default9cc6d9f3fc434e1785825c8fbcab8b.ef.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4766d2917f074b28b517e312719da27e/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=dO9G4VxohZX1lNMCmOqo5L-44d4VHN55qjw6QRDE5gU';
@@ -38,10 +38,10 @@ const initialFormData: FormData = {
 };
 
 const labs = [
-  { id: 'MIS', name: 'MIS Lab', icon: <Building2 className="w-8 h-8 mb-4 text-purple-500" />, desc: 'Management Information System' },
-  { id: 'Mobile', name: 'Mobile Lab', icon: <Smartphone className="w-8 h-8 mb-4 text-blue-500" />, desc: 'Mobile App Development' },
-  { id: 'AI', name: 'AI Lab', icon: <BrainCircuit className="w-8 h-8 mb-4 text-rose-500" />, desc: 'Artificial Intelligence & ML' },
-  { id: 'Big Data', name: 'Big Data Lab', icon: <Database className="w-8 h-8 mb-4 text-amber-500" />, desc: 'Data Analytics & Processing' }
+  { id: 'MIS', name: 'MIS Lab', icon: <Building2 className="w-8 h-8 mb-4 text-purple-500 dark:text-purple-400" />, desc: 'Management Information System' },
+  { id: 'Mobile', name: 'Mobile Lab', icon: <Smartphone className="w-8 h-8 mb-4 text-blue-500 dark:text-blue-400" />, desc: 'Mobile App Development' },
+  { id: 'AI', name: 'AI Lab', icon: <BrainCircuit className="w-8 h-8 mb-4 text-rose-500 dark:text-rose-400" />, desc: 'Artificial Intelligence & ML' },
+  { id: 'Big Data', name: 'Big Data Lab', icon: <Database className="w-8 h-8 mb-4 text-amber-500 dark:text-amber-400" />, desc: 'Data Analytics & Processing' }
 ];
 
 function App() {
@@ -49,6 +49,22 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [bookedSchedules, setBookedSchedules] = useState<Schedule[]>([]);
+  
+  // State untuk Theme (Dark/Light). Default: dark
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const savedTheme = localStorage.getItem('theme');
+    return (savedTheme as 'light' | 'dark') || 'dark';
+  });
+
+  // Terapkan class "dark" ke <html> setiap kali state theme berubah
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
 
   // Fungsi untuk mengambil data jadwal dari Power Automate
   const fetchSchedules = async () => {
@@ -90,8 +106,6 @@ function App() {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result as string;
-        // Hanya ambil base64 content setelah koma, atau biarkan full data URI (opsional)
-        // const base64Content = base64String.split(',')[1];
         setFormData(prev => ({
           ...prev,
           fileBase64: base64String.split(',')[1] || '',
@@ -116,7 +130,6 @@ function App() {
         body: JSON.stringify(formData),
       });
 
-      // Cek apakah response dari server sukses
       if (!response.ok) {
         const errText = await response.text();
         console.error('Detail Error dari Power Automate:', errText);
@@ -136,11 +149,8 @@ function App() {
     }
   };
 
-  // Mengecek apakah kombinasi Lab, Tanggal, dan Sesi yang dipilih sudah ada di database Excel
   const isConflict = bookedSchedules.some(schedule => {
-    // Karena di Excel Tanggal dan Sesi digabung di kolom "Tanggal & Jam" (contoh: "2026-06-11Sesi 1")
     const jadwalDigabung = `${formData.tanggal}${formData.sesi}`;
-    
     return (
       schedule['Lab'] === formData.lab && 
       schedule['Tanggal & Jam'] === jadwalDigabung &&
@@ -149,19 +159,28 @@ function App() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-20 transition-colors duration-300">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
+      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10 shadow-sm transition-colors duration-300">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="bg-purple-600 text-white p-2 rounded-lg">
+            <div className="bg-purple-600 dark:bg-purple-500 text-white p-2 rounded-lg">
               <Building2 className="w-6 h-6" />
             </div>
             <div>
               <h1 className="text-xl font-bold leading-tight">LabConnect</h1>
-              <p className="text-xs text-slate-500 font-medium">Sistem Peminjaman Laboratorium</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Sistem Peminjaman Laboratorium</p>
             </div>
           </div>
+          
+          {/* Theme Toggle Button */}
+          <button 
+            onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+            aria-label="Toggle Theme"
+          >
+            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
         </div>
       </header>
 
@@ -169,10 +188,10 @@ function App() {
         {/* Left Column: Info & Labs */}
         <div className="lg:col-span-5 space-y-10">
           <div>
-            <h2 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-4">
+            <h2 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4">
               Peminjaman LAB 4 Universitas Kristen Duta Wacana
             </h2>
-            <p className="text-slate-600 text-lg">
+            <p className="text-slate-600 dark:text-slate-400 text-lg">
               Ajukan peminjaman ruangan laboratorium dengan mudah. Seluruh pengajuan membutuhkan persetujuan Kepala Laboratorium.
             </p>
           </div>
@@ -182,18 +201,20 @@ function App() {
               <div 
                 key={lab.id} 
                 className={`p-6 rounded-2xl border transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-lg
-                  ${formData.lab === lab.id ? 'border-purple-500 bg-purple-50 shadow-md ring-2 ring-purple-200' : 'border-slate-200 bg-white hover:border-purple-300'}`}
+                  ${formData.lab === lab.id 
+                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30 dark:border-purple-400 shadow-md ring-2 ring-purple-200 dark:ring-purple-900' 
+                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-purple-300 dark:hover:border-purple-700'}`}
                 onClick={() => setFormData(prev => ({ ...prev, lab: lab.id }))}
               >
                 {lab.icon}
-                <h3 className="font-semibold text-slate-900">{lab.name}</h3>
-                <p className="text-sm text-slate-500 mt-1">{lab.desc}</p>
+                <h3 className="font-semibold text-slate-900 dark:text-white">{lab.name}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{lab.desc}</p>
               </div>
             ))}
           </div>
 
-          <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 flex gap-4 text-blue-900">
-            <Info className="w-6 h-6 flex-shrink-0 text-blue-600" />
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50 rounded-xl p-5 flex gap-4 text-blue-900 dark:text-blue-200">
+            <Info className="w-6 h-6 flex-shrink-0 text-blue-600 dark:text-blue-400" />
             <div>
               <h4 className="font-semibold mb-1">Alur Persetujuan (Approval)</h4>
               <p className="text-sm opacity-90 leading-relaxed">
@@ -202,21 +223,21 @@ function App() {
             </div>
           </div>
 
-          <div className="bg-white border-2 border-slate-200 rounded-xl p-5 flex items-center justify-between shadow-sm hover:border-purple-300 transition-colors">
+          <div className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-xl p-5 flex items-center justify-between shadow-sm hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
             <div className="flex gap-4 items-center">
-              <div className="bg-slate-100 p-2 rounded-lg">
-                <Calendar className="w-6 h-6 text-slate-700" />
+              <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded-lg">
+                <Calendar className="w-6 h-6 text-slate-700 dark:text-slate-300" />
               </div>
               <div>
-                <h4 className="font-semibold text-slate-900">Cek Jadwal Ketersediaan</h4>
-                <p className="text-sm text-slate-500">Pastikan ruangan kosong sebelum meminjam</p>
+                <h4 className="font-semibold text-slate-900 dark:text-white">Cek Jadwal Ketersediaan</h4>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Pastikan ruangan kosong sebelum meminjam</p>
               </div>
             </div>
             <a 
               href="https://dwcu-my.sharepoint.com/:x:/g/personal/72230612_students_ukdw_ac_id/IQBT7PdCBMyQT7B_pNW8aOlQATLz49fKi-CCCA7QdyAXr7M?e=XMgLzT" 
               target="_blank" 
               rel="noreferrer"
-              className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm whitespace-nowrap"
+              className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm whitespace-nowrap"
             >
               Lihat Excel
             </a>
@@ -225,30 +246,30 @@ function App() {
 
         {/* Right Column: Form */}
         <div className="lg:col-span-7">
-          <div className="bg-white border border-slate-200 rounded-3xl shadow-xl overflow-hidden">
-            <div className="p-8 border-b border-slate-100 bg-slate-50">
-              <h3 className="text-2xl font-bold text-slate-800">Formulir Peminjaman</h3>
-              <p className="text-slate-500 mt-1">Lengkapi data berikut untuk mengajukan jadwal.</p>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl overflow-hidden transition-colors duration-300">
+            <div className="p-8 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 transition-colors duration-300">
+              <h3 className="text-2xl font-bold text-slate-800 dark:text-white">Formulir Peminjaman</h3>
+              <p className="text-slate-500 dark:text-slate-400 mt-1">Lengkapi data berikut untuk mengajukan jadwal.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="p-8 space-y-6">
               
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-700">Nama Peminjam</label>
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Nama Peminjam</label>
                   <input 
                     type="text" name="nama" required
                     value={formData.nama} onChange={handleInputChange}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition dark:text-white"
                     placeholder="Contoh: Budi Santoso"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-700">Kategori Peminjam</label>
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Kategori</label>
                   <select 
                     name="kategori" value={formData.kategori} onChange={handleInputChange}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition bg-white"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition dark:text-white"
                   >
                     <option value="Organisasi">Organisasi / UKM</option>
                     <option value="Dosen">Dosen / Staf</option>
@@ -257,22 +278,22 @@ function App() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-700">Email Penanggung Jawab</label>
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Email Penanggung Jawab</label>
                 <input 
                   type="email" name="email" required
                   value={formData.email} onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition dark:text-white"
                   placeholder="email@universitas.ac.id"
                 />
-                <p className="text-xs text-slate-500">Notifikasi status (Approve/Reject) akan dikirim ke email ini.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Notifikasi status (Approve/Reject) akan dikirim ke email ini.</p>
               </div>
 
               <div className="grid md:grid-cols-3 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-700">Pilih Laboratorium</label>
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Pilih Laboratorium</label>
                   <select 
                     name="lab" value={formData.lab} onChange={handleInputChange}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition bg-white"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition dark:text-white"
                   >
                     <option value="MIS">MIS Lab</option>
                     <option value="Mobile">Mobile Lab</option>
@@ -282,22 +303,23 @@ function App() {
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-700">Tanggal</label>
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Tanggal</label>
                   <div className="relative">
                     <input 
                       type="date" name="tanggal" required
                       value={formData.tanggal} onChange={handleInputChange}
-                      className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition"
+                      className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition dark:text-white"
+                      style={{ colorScheme: theme === 'dark' ? 'dark' : 'light' }}
                     />
                     <Calendar className="w-5 h-5 text-slate-400 absolute left-4 top-3.5" />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-700">Sesi (Waktu)</label>
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Sesi (Waktu)</label>
                   <select 
                     name="sesi" value={formData.sesi} onChange={handleInputChange}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition bg-white"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition dark:text-white"
                   >
                     <option value="Sesi 1">Sesi 1 (07:30 - 10:00)</option>
                     <option value="Sesi 2">Sesi 2 (10:30 - 13:00)</option>
@@ -308,7 +330,7 @@ function App() {
               </div>
 
               {formData.tanggal && isConflict && (
-                <div className="p-4 bg-red-50 text-red-800 rounded-xl flex gap-3 border border-red-200">
+                <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 rounded-xl flex gap-3 border border-red-200 dark:border-red-900/50">
                   <AlertCircle className="w-6 h-6 flex-shrink-0" />
                   <div>
                     <p className="font-semibold">Jadwal Bentrok (Penuh)</p>
@@ -318,30 +340,30 @@ function App() {
               )}
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-700">Keperluan Peminjaman</label>
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Keperluan Peminjaman</label>
                 <textarea 
                   name="keperluan" required rows={3}
                   value={formData.keperluan} onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition resize-none dark:text-white"
                   placeholder="Jelaskan secara singkat kegiatan yang akan dilakukan..."
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-700">Surat Peminjaman (PDF/Gambar)</label>
-                <label className={`block w-full border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${formData.fileName ? 'border-purple-400 bg-purple-50' : 'border-slate-300 hover:border-purple-400 hover:bg-slate-50'}`}>
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Surat Peminjaman (PDF/Gambar)</label>
+                <label className={`block w-full border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${formData.fileName ? 'border-purple-400 bg-purple-50 dark:bg-purple-900/20 dark:border-purple-500' : 'border-slate-300 dark:border-slate-700 hover:border-purple-400 dark:hover:border-purple-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
                   <input type="file" required accept=".pdf,image/*" onChange={handleFileChange} className="hidden" />
                   
                   {formData.fileName ? (
-                    <div className="flex flex-col items-center text-purple-700">
-                      <CheckCircle2 className="w-8 h-8 mb-2 text-purple-600" />
+                    <div className="flex flex-col items-center text-purple-700 dark:text-purple-400">
+                      <CheckCircle2 className="w-8 h-8 mb-2 text-purple-600 dark:text-purple-500" />
                       <span className="font-medium">{formData.fileName}</span>
                       <span className="text-xs mt-1 opacity-75">Klik untuk mengganti file</span>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center text-slate-500">
-                      <Upload className="w-8 h-8 mb-2 text-slate-400" />
-                      <span className="font-medium text-slate-700">Klik untuk unggah file</span>
+                    <div className="flex flex-col items-center text-slate-500 dark:text-slate-400">
+                      <Upload className="w-8 h-8 mb-2 text-slate-400 dark:text-slate-500" />
+                      <span className="font-medium text-slate-700 dark:text-slate-300">Klik untuk unggah file</span>
                       <span className="text-xs mt-1">Maksimal 5MB (PDF/JPG/PNG)</span>
                     </div>
                   )}
@@ -349,7 +371,7 @@ function App() {
               </div>
 
               {submitStatus === 'success' && (
-                <div className="p-4 bg-emerald-50 text-emerald-800 rounded-xl flex gap-3 border border-emerald-200">
+                <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300 rounded-xl flex gap-3 border border-emerald-200 dark:border-emerald-900/50">
                   <CheckCircle2 className="w-6 h-6 flex-shrink-0" />
                   <div>
                     <p className="font-semibold">Pengajuan Berhasil Dikirim!</p>
@@ -359,7 +381,7 @@ function App() {
               )}
 
               {submitStatus === 'error' && (
-                <div className="p-4 bg-red-50 text-red-800 rounded-xl flex gap-3 border border-red-200">
+                <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 rounded-xl flex gap-3 border border-red-200 dark:border-red-900/50">
                   <AlertCircle className="w-6 h-6 flex-shrink-0" />
                   <div>
                     <p className="font-semibold">Terjadi Kesalahan</p>
@@ -373,8 +395,8 @@ function App() {
                 disabled={isSubmitting || (formData.tanggal !== '' && isConflict)}
                 className={`w-full font-semibold py-4 rounded-xl transition-all duration-300 shadow-lg ${
                   isConflict && formData.tanggal !== '' 
-                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed' 
-                    : 'bg-slate-900 hover:bg-slate-800 text-white hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed'
+                    ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed' 
+                    : 'bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed'
                 }`}
               >
                 {isSubmitting ? 'Mengirim Data...' : (isConflict && formData.tanggal !== '' ? 'Jadwal Penuh' : 'Kirim Pengajuan')}

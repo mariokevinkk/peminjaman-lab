@@ -1,12 +1,14 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-brand: #aa3bff;
   --color-brand-light: #d8b4fe;
 }
 
 body {
-  @apply bg-slate-50 text-slate-900;
+  @apply bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100;
   margin: 0;
   font-family: 'Inter', system-ui, sans-serif;
 }
