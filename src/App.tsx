@@ -54,7 +54,6 @@ function App() {
   const fetchSchedules = async () => {
     if (!GET_WEBHOOK_URL) return; // Abaikan jika belum ada URL
     
-    setIsLoadingSchedules(true);
     try {
       const response = await fetch(GET_WEBHOOK_URL, { mode: 'cors' });
       if (response.ok) {
